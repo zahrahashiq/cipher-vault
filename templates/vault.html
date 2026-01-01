@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Your entries</h1>
+
+<!--If there are no saved entries yet, show empty state message-->
+{% if entries|length == 0 %}
+  <p>No entries yet. Add your first one.</p>
+{% else %}
+<!--Entries table with passwords hidden by default-->
+  <table>
+    <thead>
+      <tr>
+        <th>Site</th>
+        <th>Username</th>
+        <th>Password</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!--data index used by JS to fetch the password via /api/password/index-->
+      {% for e in entries %}
+      <tr data-index="{{ loop.index0 }}">
+        <td>{{ e.site }}</td>
+        <td>{{ e.username }}</td>
+
+        <td>
+          <!--Password is not in HTML to avoid exposing secrets-->
+          <span class="pw masked" aria-label="Password hidden">••••••••</span>
+          
+          <!--copy button fetches password and copies to clipboard-->
+          <button type="button" class="iconbtn copybtn" title="Copy password" aria-label="Copy password">
+            📋
+          </button>
+
+          <!--Eye button reveals or hides, with autohide timer-->
+          <button type="button" class="iconbtn eyebtn" title="Reveal/Hide password" aria-label="Reveal or hide password">
+            👁️
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+
+<div class="actions">
+  <a class="btn" href="{{ url_for('add') }}">+ Add entry</a>
+</div>
+
+<script>
+  //Fetch a single password from the server by index
+  //Returns null if session is locked (page redirects to unlock)
+  async function fetchPassword(index) {
+    const res = await fetch(`/api/password/${index}`);
+
+    // If locked, redirect to unlock page
+    if (res.status === 401) {
+      window.location.href = "/unlock";
+      return null;
+    }
+
+    if (!res.ok) throw new Error("Could not fetch password");
+    const data = await res.json();
+    return data.password;
+  }
+
+  //Copy text to clipboard
+  async function copyToClipboard(text) {
+    await navigator.clipboard.writeText(text);
+  }
+
+  //Hide password and reset eye icon
+  function mask(pwSpan, eyeBtn) {
+    pwSpan.textContent = "••••••••";
+    pwSpan.classList.add("masked");
+    eyeBtn.textContent = "👁️";
+  }
+
+  //reveal password text and change eye icon to "hide" state
+  function unmask(pwSpan, eyeBtn, password) {
+    pwSpan.textContent = password;
+    pwSpan.classList.remove("masked");
+    eyeBtn.textContent = "🙈";
+  }
+
+  //Attach behaviour per table row so each row has independant state and timer
+  document.querySelectorAll("tr[data-index]").forEach((row) => {
+    const index = row.getAttribute("data-index");
+    const pwSpan = row.querySelector(".pw");
+    const copyBtn = row.querySelector(".copybtn");
+    const eyeBtn = row.querySelector(".eyebtn");
+
+    //per row state
+    let revealed = false;
+    let cachedPassword = null;
+    let hideTimer = null;
+
+    //fetch password once per row and cache it to avoid repeated calls
+    async function ensurePasswordLoaded() {
+      if (cachedPassword) return cachedPassword;
+      cachedPassword = await fetchPassword(index);
+      return cachedPassword; // may be null if redirecting
+    }
+
+    //reveal/hide behaviour, hide timer
+    eyeBtn.addEventListener("click", async () => {
+      try {
+        if (!revealed) {
+          const pw = await ensurePasswordLoaded();
+          if (!pw) return; // redirect is happening
+
+          unmask(pwSpan, eyeBtn, pw);
+          revealed = true;
+
+          // Auto-hide after 10 seconds
+          if (hideTimer) clearTimeout(hideTimer);
+          hideTimer = setTimeout(() => {
+            mask(pwSpan, eyeBtn);
+            revealed = false;
+            hideTimer = null;
+          }, 10000);
+        } else {
+          // Manual hide
+          if (hideTimer) clearTimeout(hideTimer);
+          mask(pwSpan, eyeBtn);
+          revealed = false;
+          hideTimer = null;
+        }
+      } catch (e) {
+        alert("Couldn't reveal. Is the vault locked?");
+      }
+    });
+
+    //copy button fetches password on demand and copies to clipboard
+    copyBtn.addEventListener("click", async () => {
+      try {
+        const pw = await ensurePasswordLoaded();
+        if (!pw) return; // redirect is happening
+
+        await copyToClipboard(pw);
+
+        //UX feedback to let user know it worked
+        const old = copyBtn.textContent;
+        copyBtn.textContent = "✅";
+        setTimeout(() => (copyBtn.textContent = old), 800);
+      } catch (e) {
+        alert("Couldn't copy. Is the vault locked?");
+      }
+    });
+  });
+</script>
+
+<script>
+  //Heartbeat - server to detect autolock and redirect to /unlock
+  //API pring is designed not to extend the session timer
+  async function heartbeat() {
+    try {
+      const res = await fetch("/api/ping");
+      if (res.status === 401) {
+        window.location.href = "/unlock";
+      }
+    } catch (e) {
+      // ignore network errors
+    }
+  }
+
+  // check every 3 seconds (does NOT extend session)
+  setInterval(heartbeat, 3000);
+</script>
+
+
+{% endblock %}

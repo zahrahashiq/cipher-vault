@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block content %}
+<h1>Add entry</h1>
+
+<form method="post">
+  <label>Site</label>
+  <input name="site" placeholder="e.g. Gmail" required>
+
+  <label>Username</label>
+  <input name="username" placeholder="e.g. zahrah@gmail.com" required>
+
+  <label>Password</label>
+  <input name="password" placeholder="(demo only)" required>
+
+  <button type="submit">Save entry</button>
+</form>
+
+<script>
+  async function heartbeat() {
+    try {
+      const res = await fetch("/api/ping");
+      if (res.status === 401) {
+        window.location.href = "/unlock";
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // check every 3 seconds (does NOT extend session)
+  setInterval(heartbeat, 3000);
+</script>
+{% endblock %}
+
+

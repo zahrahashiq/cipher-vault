@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!--Base template that all pages share-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <!--responsive on small devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title or "Cipher Vault" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">🔐 Cipher Vault</div>
+      <nav class="nav">
+        <a href="{{ url_for('vault') }}">Vault</a>
+        <a href="{{ url_for('add') }}">Add</a>
+        <a href="{{ url_for('lock') }}">Lock</a>
+      </nav>
+    </header>
+
+    <!--Flash messages from flask-->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash">
+          {% for category, message in messages %}
+            <div class="msg {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <main class="card">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="foot">
+      Local-only demo project • Do not store real passwords
+    </footer>
+  </div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

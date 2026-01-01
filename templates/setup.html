@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<!--Vault setup page (first visit)-->
+<h1>Create your vault</h1>
+<p>Choose a strong master password. This encrypts everything.</p>
+
+<!--create vault form-->
+<form method="post">
+  <label>Master password</label>
+  <input type="password" name="master1" required>
+
+  <label>Confirm master password</label>
+  <input type="password" name="master2" required>
+
+  <!--button creates encrypted vault on disk-->
+  <button type="submit">Create vault</button>
+</form>
+{% endblock %}

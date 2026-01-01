@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block content %}
+<h1>Unlock vault</h1>
+<p>Enter your master password to decrypt the vault.</p>
+
+<!--Unlock form-->
+<form method="post">
+  <label>Master password</label>
+  <input type="password" name="master" required>
+
+  <button type="submit">Unlock</button>
+</form>
+{% endblock %}
