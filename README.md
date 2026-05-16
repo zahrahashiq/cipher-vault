@@ -6,12 +6,12 @@ This was built as a learning-based security application.
 
 ## Disclaimer
 This is a local project created for learning purposes.
-Please do not store real or sensitive password in Cipher Vault.
+Please do not store real or sensitive passwords in Cipher Vault.
 
 ## Why this project exists
-The goal of making the cipher vault was to explore the following:
+The goal of Cipher Vault was to explore the following:
 - how passwords can be transformed into encryption keys securely.
-- how to accessing sensitive data (login details) can be gated, timed and revoked.
+- how to access sensitive data (login details) can be gated, timed and revoked.
 - how to use frontend design to minimise accidental exposure of sensitive info.
 - how encrypted data can be stored securely on a disk
 
@@ -64,6 +64,10 @@ There are some features that have been avoided as they would be needed for a rea
 - Supporting vault ex/import
 - Adding password generation
 
-## Runing crypto vault
+## Installation
 ```bash
+git clone https://github.com/zahrahashiq/cipher-vault.git
+cd cipher-vault
+pip install -r requirements.txt
 python app.py
+```
